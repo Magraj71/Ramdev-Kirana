@@ -221,7 +221,7 @@ export default function UserDashboard() {
 
   // Handle continue shopping
   const handleContinueShopping = () => {
-    router.push("/products");
+    router.push("/shop");
   };
 
   // Handle logout
