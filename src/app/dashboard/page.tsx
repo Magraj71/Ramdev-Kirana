@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth-request";
-import OwnerDashboard from "@/app/dashboard/OwnerDashboard/page.tsx";
+import OwnerDashboard from "@/app/dashboard/OwnerDashboard/page";
 import UserDashboard from "@/app/dashboard/UserDashboard/page";
 // import {getUserIdFromReq} from "@/lib/auth"
 

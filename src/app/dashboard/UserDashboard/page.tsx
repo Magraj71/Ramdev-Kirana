@@ -35,7 +35,11 @@ import {
   Home,
   Truck,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Trash2,
+  X,
+  Check,
+  ExternalLink
 } from "lucide-react";
 
 // Interfaces
@@ -61,9 +65,11 @@ interface Order {
   date: string;
   items: number;
   amount: string;
-  status: 'delivered' | 'processing' | 'pending';
+  status: 'delivered' | 'processing' | 'pending' | 'confirmed';
   tracking: string;
   customer: string;
+  paymentMethod?: string;
+  expectedDelivery?: string;
 }
 
 interface WishlistItem {
@@ -73,59 +79,58 @@ interface WishlistItem {
   category: string;
   image: string;
   productId: string;
+  sku?: string;
+  stock?: number;
+}
+
+interface DashboardResponse {
+  success: boolean;
+  stats: UserStats;
+  recentOrders: Order[];
+  wishlist: WishlistItem[];
+  lastUpdated?: string;
 }
 
 export default function UserDashboard() {
   const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
-  const [loading, setLoading] = useState({
-    stats: true,
-    orders: true,
-    wishlist: true
-  });
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
 
-  // Fetch all data
+  // Fetch all dashboard data
   const fetchDashboardData = async () => {
     try {
       setError(null);
       setRefreshing(true);
 
-      // Fetch user stats
-      const statsResponse = await axios.get("/api/user/stats");
-      if (statsResponse.data.success) {
-        setUserStats(statsResponse.data.stats);
-      }
+      const response = await axios.get<DashboardResponse>("/api/dashboard/user");
 
-      // Fetch recent orders
-      const ordersResponse = await axios.get("/api/user/orders/recent");
-      if (ordersResponse.data.success) {
-        setRecentOrders(ordersResponse.data.orders);
-      }
-
-      // Fetch wishlist
-      const wishlistResponse = await axios.get("/api/user/wishlist");
-      if (wishlistResponse.data.success) {
-        setWishlistItems(wishlistResponse.data.wishlist);
+      if (response.data.success) {
+        setUserStats(response.data.stats);
+        setRecentOrders(response.data.recentOrders);
+        setWishlistItems(response.data.wishlist);
+      } else {
+        throw new Error(response.data.message || "Failed to load dashboard");
       }
 
     } catch (err: any) {
       console.error("Dashboard data fetch error:", err);
-      setError(err.response?.data?.message || "Failed to load dashboard data");
       
-      // Redirect to login if unauthorized
       if (err.response?.status === 401) {
-        router.push("/login");
+        setError("Session expired. Please login again.");
+        setTimeout(() => router.push("/login"), 2000);
+      } else if (err.response?.status === 404) {
+        setError("User data not found. Please contact support.");
+      } else {
+        setError(err.response?.data?.message || "Failed to load dashboard data");
       }
+      
     } finally {
-      setLoading({
-        stats: false,
-        orders: false,
-        wishlist: false
-      });
+      setLoading(false);
       setRefreshing(false);
     }
   };
@@ -139,93 +144,122 @@ export default function UserDashboard() {
     fetchDashboardData();
   };
 
-  // Handle add to cart
-  // Handle remove from wishlist - FIXED
-const handleRemoveFromWishlist = async (itemId: string) => {
-  try {
-    const response = await axios.delete(`/api/user/wishlist/${itemId}`);
-    
-    if (response.data.success) {
-      // Remove from local state
-      setWishlistItems(prev => prev.filter(item => item._id !== itemId));
+  // Handle remove from wishlist
+  const handleRemoveFromWishlist = async (itemId: string) => {
+    try {
+      const response = await axios.delete(`/api/user/wishlist/${itemId}`);
       
-      // Update user stats
-      setUserStats(prev => prev ? {
-        ...prev,
-        wishlistItems: prev.wishlistItems - 1
-      } : null);
-      
-      // Show success message
-      setSuccess("Removed from wishlist!");
-      setTimeout(() => setSuccess(""), 3000);
-    } else {
-      setError(response.data.message || "Failed to remove from wishlist");
-    }
-  } catch (err: any) {
-    console.error("Remove from wishlist error:", err);
-    
-    // Even if API fails, remove from UI for better UX
-    setWishlistItems(prev => prev.filter(item => item._id !== itemId));
-    
-    // Show error
-    if (err.response?.status === 404) {
-      setError("Item not found in wishlist");
-    } else {
+      if (response.data.success) {
+        // Remove from local state
+        setWishlistItems(prev => prev.filter(item => item._id !== itemId));
+        
+        // Update user stats
+        setUserStats(prev => prev ? {
+          ...prev,
+          wishlistItems: Math.max(0, prev.wishlistItems - 1)
+        } : null);
+        
+        // Show success message
+        setSuccess("Removed from wishlist!");
+        setTimeout(() => setSuccess(""), 3000);
+      }
+    } catch (err: any) {
+      console.error("Remove from wishlist error:", err);
       setError(err.response?.data?.message || "Failed to remove from wishlist");
     }
-  }
-};
+  };
 
-// Handle add to cart from wishlist - FIXED
-const handleAddToCartFromWishlist = async (productId: string, itemId: string) => {
-  try {
-    // First add to cart
-    const cartResponse = await axios.post("/api/cart/add", { 
-      productId, 
-      quantity: 1 
-    });
-    
-    if (cartResponse.data.success) {
-      // Then remove from wishlist
-      await handleRemoveFromWishlist(itemId);
+  // Handle add to cart from wishlist
+  const handleAddToCartFromWishlist = async (productId: string, itemId: string) => {
+    try {
+      const cartResponse = await axios.post("/api/cart/add", { 
+        productId, 
+        quantity: 1 
+      });
       
-      // Show success message
-      setSuccess("Added to cart and removed from wishlist!");
-      setTimeout(() => setSuccess(""), 3000);
+      if (cartResponse.data.success) {
+        // Remove from wishlist after adding to cart
+        await handleRemoveFromWishlist(itemId);
+        
+        setSuccess("Added to cart!");
+        setTimeout(() => setSuccess(""), 3000);
+      }
+    } catch (error: any) {
+      console.error("Add to cart from wishlist error:", error);
+      setError(error.response?.data?.message || "Failed to add to cart");
     }
-  } catch (error) {
-    console.error("Add to cart from wishlist error:", error);
-    setError("Failed to add to cart");
-  }
-};
+  };
 
   // Handle track order
   const handleTrackOrder = (trackingId: string) => {
     router.push(`/tracking/${trackingId}`);
   };
 
-  // Handle continue shopping
-  const handleContinueShopping = () => {
-    router.push("/shop");
+  // Handle view order details
+  const handleViewOrder = (orderId: string) => {
+    router.push(`/orders/${orderId}`);
   };
 
-  // Handle repeat last order
-  const handleRepeatLastOrder = async () => {
-    if (recentOrders.length > 0) {
-      try {
-        const lastOrder = recentOrders[0];
-        await axios.post("/api/user/orders/repeat", { orderId: lastOrder.id });
-        alert("Order repeated successfully!");
-        fetchDashboardData(); // Refresh data
-      } catch (error) {
-        console.error("Repeat order error:", error);
-        alert("Failed to repeat order");
-      }
+  // Handle continue shopping
+  const handleContinueShopping = () => {
+    router.push("/products");
+  };
+
+  // Handle logout
+  const handleLogout = async () => {
+    try {
+      await axios.post("/api/auth/logout");
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      setError("Failed to logout. Please try again.");
+    }
+  };
+
+  // Get user initials
+  const getUserInitials = () => {
+    if (!userStats?.name) return "U";
+    return userStats.name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  // Get status color and icon
+  const getStatusConfig = (status: string) => {
+    switch (status) {
+      case 'delivered':
+        return {
+          color: 'bg-emerald-100 text-emerald-700',
+          icon: CheckCircle,
+          iconColor: 'text-emerald-600'
+        };
+      case 'processing':
+      case 'confirmed':
+        return {
+          color: 'bg-blue-100 text-blue-700',
+          icon: Package,
+          iconColor: 'text-blue-600'
+        };
+      case 'pending':
+        return {
+          color: 'bg-orange-100 text-orange-700',
+          icon: Clock,
+          iconColor: 'text-orange-600'
+        };
+      default:
+        return {
+          color: 'bg-gray-100 text-gray-700',
+          icon: Clock,
+          iconColor: 'text-gray-600'
+        };
     }
   };
 
   // Loading state
-  if (loading.stats && loading.orders && loading.wishlist) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30">
         <Navbar />
@@ -253,13 +287,13 @@ const handleAddToCartFromWishlist = async (productId: string, itemId: string) =>
               <div className="space-y-3">
                 <button
                   onClick={fetchDashboardData}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
                 >
                   Try Again
                 </button>
                 <button
                   onClick={() => router.push("/login")}
-                  className="w-full border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-lg"
+                  className="w-full border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors"
                 >
                   Go to Login
                 </button>
@@ -271,23 +305,38 @@ const handleAddToCartFromWishlist = async (productId: string, itemId: string) =>
     );
   }
 
-  // Get user initials
-  const getUserInitials = () => {
-    if (!userStats?.name) return "U";
-    return userStats.name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30">
       <Navbar />
       
       <main className="p-4 md:p-6">
-        {/* Header with Refresh Button */}
+        {/* Success Alert */}
+        {success && (
+          <div className="mb-4 p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 flex justify-between items-center animate-fade-in">
+            <div className="flex items-center gap-2">
+              <Check className="w-5 h-5" />
+              <span>{success}</span>
+            </div>
+            <button onClick={() => setSuccess("")} className="hover:bg-emerald-100 p-1 rounded">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
+        {/* Error Alert */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5" />
+              <span>{error}</span>
+            </div>
+            <button onClick={() => setError("")} className="hover:bg-red-100 p-1 rounded">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
+        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center text-white text-2xl font-bold">
@@ -311,7 +360,7 @@ const handleAddToCartFromWishlist = async (productId: string, itemId: string) =>
                 <div className="flex flex-wrap items-center gap-2 mt-2">
                   <span className="flex items-center text-sm text-gray-600">
                     <Award className="w-4 h-4 mr-1" />
-                    {userStats.membership}
+                    {userStats.membership} Member
                   </span>
                   <span className="text-gray-400">•</span>
                   <span className="flex items-center text-sm text-gray-600">
@@ -340,22 +389,20 @@ const handleAddToCartFromWishlist = async (productId: string, itemId: string) =>
                 Settings
               </button>
             </Link>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 bg-red-50 hover:bg-red-100 text-red-700 font-medium px-4 py-2 rounded-xl transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              Logout
+            </button>
           </div>
         </div>
 
-        {/* Error Alert */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="w-5 h-5" />
-              <span>{error}</span>
-            </div>
-          </div>
-        )}
-
         {/* Quick Stats */}
         {userStats && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {/* Total Orders */}
             <div className="bg-gradient-to-br from-white to-blue-50 rounded-2xl p-6 shadow-sm border border-blue-100">
               <div className="flex justify-between items-start">
                 <div>
@@ -374,6 +421,7 @@ const handleAddToCartFromWishlist = async (productId: string, itemId: string) =>
               </div>
             </div>
 
+            {/* Total Spent */}
             <div className="bg-gradient-to-br from-white to-emerald-50 rounded-2xl p-6 shadow-sm border border-emerald-100">
               <div className="flex justify-between items-start">
                 <div>
@@ -391,6 +439,7 @@ const handleAddToCartFromWishlist = async (productId: string, itemId: string) =>
               </div>
             </div>
 
+            {/* Pending Orders */}
             <div className="bg-gradient-to-br from-white to-orange-50 rounded-2xl p-6 shadow-sm border border-orange-100">
               <div className="flex justify-between items-start">
                 <div>
@@ -409,6 +458,7 @@ const handleAddToCartFromWishlist = async (productId: string, itemId: string) =>
               </div>
             </div>
 
+            {/* Wishlist */}
             <div className="bg-gradient-to-br from-white to-purple-50 rounded-2xl p-6 shadow-sm border border-purple-100">
               <div className="flex justify-between items-start">
                 <div>
@@ -444,11 +494,7 @@ const handleAddToCartFromWishlist = async (productId: string, itemId: string) =>
             </div>
             
             <div className="p-6">
-              {loading.orders ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-                </div>
-              ) : recentOrders.length === 0 ? (
+              {recentOrders.length === 0 ? (
                 <div className="text-center py-12">
                   <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                   <p className="text-gray-500">No orders yet</p>
@@ -462,48 +508,61 @@ const handleAddToCartFromWishlist = async (productId: string, itemId: string) =>
               ) : (
                 <>
                   <div className="space-y-4">
-                    {recentOrders.map((order) => (
-                      <div key={order.id} className="flex items-center justify-between p-4 hover:bg-gray-50 rounded-xl transition-colors border border-gray-100">
-                        <div className="flex items-center gap-4">
-                          <div className={`p-3 rounded-xl ${
-                            order.status === 'delivered' ? 'bg-emerald-100' :
-                            order.status === 'processing' ? 'bg-blue-100' : 'bg-orange-100'
-                          }`}>
-                            {order.status === 'delivered' ? <CheckCircle className="w-6 h-6 text-emerald-600" /> :
-                             order.status === 'processing' ? <Package className="w-6 h-6 text-blue-600" /> :
-                             <Clock className="w-6 h-6 text-orange-600" />}
+                    {recentOrders.map((order) => {
+                      const statusConfig = getStatusConfig(order.status);
+                      const StatusIcon = statusConfig.icon;
+                      
+                      return (
+                        <div key={order.id} className="flex items-center justify-between p-4 hover:bg-gray-50 rounded-xl transition-colors border border-gray-100">
+                          <div className="flex items-center gap-4">
+                            <div className={`p-3 rounded-xl ${statusConfig.color.replace('text', 'bg')}`}>
+                              <StatusIcon className={`w-6 h-6 ${statusConfig.iconColor}`} />
+                            </div>
+                            <div>
+                              <p className="font-bold text-gray-800">{order.id}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-sm text-gray-600">{order.date}</span>
+                                <span className="text-xs text-gray-400">•</span>
+                                <span className="text-sm text-gray-600">{order.items} items</span>
+                                {order.expectedDelivery && (
+                                  <>
+                                    <span className="text-xs text-gray-400">•</span>
+                                    <span className="text-sm text-emerald-600">
+                                      Est. delivery: {order.expectedDelivery}
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-bold text-gray-800">{order.id}</p>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className="text-sm text-gray-600">{order.date}</span>
-                              <span className="text-xs text-gray-400">•</span>
-                              <span className="text-sm text-gray-600">{order.items} items</span>
+                          
+                          <div className="text-right">
+                            <p className="font-bold text-gray-800 text-lg">{order.amount}</p>
+                            <div className="flex items-center gap-2 mt-2">
+                              <span className={`text-xs px-3 py-1 rounded-full font-medium ${statusConfig.color}`}>
+                                {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                              </span>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleTrackOrder(order.tracking)}
+                                  className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                                  title="Track order"
+                                >
+                                  <Truck className="w-3 h-3" />
+                                </button>
+                                <button
+                                  onClick={() => handleViewOrder(order.id)}
+                                  className="text-xs text-gray-600 hover:text-gray-800 font-medium flex items-center gap-1"
+                                  title="View details"
+                                >
+                                  <ExternalLink className="w-3 h-3" />
+                                </button>
+                              </div>
                             </div>
                           </div>
                         </div>
-                        
-                        <div className="text-right">
-                          <p className="font-bold text-gray-800 text-lg">{order.amount}</p>
-                          <div className="flex items-center gap-2 mt-2">
-                            <span className={`text-xs px-3 py-1 rounded-full font-medium ${
-                              order.status === 'delivered' ? 'bg-emerald-100 text-emerald-700' :
-                              order.status === 'processing' ? 'bg-blue-100 text-blue-700' :
-                              'bg-orange-100 text-orange-700'
-                            }`}>
-                              {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                            </span>
-                            <button
-                              onClick={() => handleTrackOrder(order.tracking)}
-                              className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
-                            >
-                              Track
-                              <ArrowRight className="w-3 h-3" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                   
                   <div className="mt-6 flex gap-3">
@@ -514,14 +573,12 @@ const handleAddToCartFromWishlist = async (productId: string, itemId: string) =>
                       <ShoppingCart className="w-5 h-5" />
                       Continue Shopping
                     </button>
-                    <button
-                      onClick={handleRepeatLastOrder}
-                      disabled={recentOrders.length === 0}
-                      className="flex items-center justify-center gap-2 border-2 border-gray-300 hover:border-blue-300 hover:bg-blue-50 text-gray-700 font-medium px-6 py-3 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <RefreshCw className="w-4 h-4" />
-                      Repeat Last Order
-                    </button>
+                    <Link href="/orders">
+                      <button className="flex items-center justify-center gap-2 border-2 border-gray-300 hover:border-blue-300 hover:bg-blue-50 text-gray-700 font-medium px-6 py-3 rounded-xl transition-all">
+                        <ShoppingBag className="w-4 h-4" />
+                        View Orders
+                      </button>
+                    </Link>
                   </div>
                 </>
               )}
@@ -610,11 +667,7 @@ const handleAddToCartFromWishlist = async (productId: string, itemId: string) =>
           </div>
           
           <div className="p-6">
-            {loading.wishlist ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-              </div>
-            ) : wishlistItems.length === 0 ? (
+            {wishlistItems.length === 0 ? (
               <div className="text-center py-12">
                 <Heart className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                 <p className="text-gray-500">Your wishlist is empty</p>
@@ -640,9 +693,10 @@ const handleAddToCartFromWishlist = async (productId: string, itemId: string) =>
                           <span className="font-bold text-lg text-gray-800">{item.price}</span>
                           <div className="flex gap-2">
                             <button
-                              onClick={() => handleAddToCart(item.productId)}
-                              className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors"
-                              title="Add to cart"
+                              onClick={() => handleAddToCartFromWishlist(item.productId, item._id)}
+                              disabled={item.stock === 0}
+                              className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              title={item.stock === 0 ? "Out of stock" : "Add to cart"}
                             >
                               <ShoppingCart className="w-4 h-4" />
                             </button>
@@ -651,10 +705,15 @@ const handleAddToCartFromWishlist = async (productId: string, itemId: string) =>
                               className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors"
                               title="Remove from wishlist"
                             >
-                              <Heart className="w-4 h-4" />
+                              <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
                         </div>
+                        {item.stock !== undefined && item.stock < 5 && (
+                          <p className="text-xs text-orange-600 mt-2">
+                            Only {item.stock} left in stock
+                          </p>
+                        )}
                       </div>
                     </div>
                   ))}

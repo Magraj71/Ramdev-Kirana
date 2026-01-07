@@ -1,35 +1,39 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
-import { getUserFromRequest } from "@/lib/auth";
 import Wishlist from "@/models/Wishlist";
+import { getUserFromRequest } from "@/lib/auth";
+import mongoose from "mongoose";
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
-
-export async function DELETE(req: NextRequest, { params }: RouteParams) {
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     await connectDB();
-    
-    const user = getUserFromRequest(req);
-    const { id } = params;
 
-    if (!id) {
+    const user = getUserFromRequest(req);
+    if (!user || !user.userId) {
       return NextResponse.json(
-        { success: false, message: "Wishlist item ID is required" },
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const { id } = params;
+    
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json(
+        { success: false, message: "Invalid wishlist item ID" },
         { status: 400 }
       );
     }
 
-    // Find and delete the wishlist item
-    const wishlistItem = await Wishlist.findOneAndDelete({
+    const result = await Wishlist.findOneAndDelete({
       _id: id,
       userId: user.userId
     });
 
-    if (!wishlistItem) {
+    if (!result) {
       return NextResponse.json(
         { success: false, message: "Wishlist item not found" },
         { status: 404 }
@@ -39,19 +43,11 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     return NextResponse.json({
       success: true,
       message: "Removed from wishlist",
-      removedItemId: id
+      deletedId: id
     });
 
   } catch (error: any) {
-    console.error("Wishlist DELETE Error:", error);
-    
-    if (error.name === 'AuthenticationError') {
-      return NextResponse.json(
-        { success: false, message: error.message },
-        { status: 401 }
-      );
-    }
-
+    console.error("Wishlist delete error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to remove from wishlist" },
       { status: 500 }
