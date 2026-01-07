@@ -194,9 +194,9 @@ export default function OwnerOrder() {
     setFilteredOrders(result);
   }, [searchQuery, statusFilter, dateFilter, orders]);
 
-  const updateOrderStatus = async (orderId: string, newStatus: Order["status"]) => {
+  const updateOrderStatus = async (Id: string, newStatus: Order["status"]) => {
     try {
-      const response = await fetch(`/api/orders/${orderId}/status`, {
+      const response = await fetch(`/api/orders/${Id}/status`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -207,7 +207,7 @@ export default function OwnerOrder() {
       if (response.ok) {
         // Update local state
         setOrders(prev => prev.map(order =>
-          order._id === orderId ? { ...order, status: newStatus } : order
+          order._id === Id ? { ...order, status: newStatus } : order
         ));
         fetchOwnerOrders(); // Refresh data
       }

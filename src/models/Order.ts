@@ -181,7 +181,7 @@ orderSchema.pre("save", async function () {
 orderSchema.index({ storeId: 1, createdAt: -1 });
 orderSchema.index({ "customer.email": 1 });
 orderSchema.index({ "customer.phone": 1 });
-orderSchema.index({ orderId: 1 }, { unique: true });
+// orderSchema.index({ orderId: 1 }, { unique: true });
 
 // orderSchema.index({ storeId: 1, createdAt: -1 });
 orderSchema.index({ "customer.email": 1, storeId: 1 }); // User ke liye
