@@ -25,7 +25,9 @@ import {
   ShoppingCart,
   Shield,
   Store as ShopIcon,
-  Bell
+  Bell,
+  Search,
+  MessageSquare
 } from "lucide-react";
 
 // TypeScript interfaces
@@ -62,16 +64,38 @@ export default function Navbar() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(0);
   
   const router = useRouter();
   const pathname = usePathname();
   
   // Get user data from hook
   const { user, isLoading: userLoading, error, refreshUser } = useUser();
+
+  // Track window width for responsive behavior
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+      // Close mobile menu on tablet+ screens
+      if (window.innerWidth >= 768) {
+        setIsMenuOpen(false);
+      }
+      // Close dropdowns on smaller screens for better UX
+      if (window.innerWidth < 1024) {
+        setIsProfileOpen(false);
+        setIsNotificationsOpen(false);
+      }
+    };
+    
+    setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -83,6 +107,9 @@ export default function Navbar() {
       if (!target.closest('.notifications-dropdown')) {
         setIsNotificationsOpen(false);
       }
+      if (!target.closest('.search-container')) {
+        setIsSearchOpen(false);
+      }
     };
 
     document.addEventListener('click', handleClickOutside);
@@ -92,6 +119,7 @@ export default function Navbar() {
   // Close mobile menu on route change
   useEffect(() => {
     setIsMenuOpen(false);
+    setIsSearchOpen(false);
   }, [pathname]);
 
   // Add scroll effect
@@ -220,18 +248,18 @@ export default function Navbar() {
     }
   }, [isDarkMode]);
 
-  // Navigation items based on user role - Corrected for owner and user only
+  // Responsive navigation items - Different layouts for different screen sizes
   const navigationItems: NavItem[] = useMemo(() => [
     { 
       name: "Dashboard", 
       href: "/dashboard", 
-      icon: <Home className="w-4 h-4" />,
+      icon: <Home className="w-4 h-4 md:w-5 md:h-5" />,
       allowedRoles: ['owner', 'user']
     },
     { 
       name: "Orders", 
       href: "/orders", 
-      icon: <ShoppingBag className="w-4 h-4" />,
+      icon: <ShoppingBag className="w-4 h-4 md:w-5 md:h-5" />,
       allowedRoles: ['owner', 'user'],
       badge: notifications.filter(n => n.type === 'order' && !n.read).length
     },
@@ -239,28 +267,28 @@ export default function Navbar() {
     { 
       name: "Products", 
       href: "/products", 
-      icon: <Package className="w-4 h-4" />,
+      icon: <Package className="w-4 h-4 md:w-5 md:h-5" />,
       allowedRoles: ['owner'],
       requiresStore: true
     },
     { 
       name: "Inventory", 
       href: "/inventory", 
-      icon: <Package className="w-4 h-4" />,
+      icon: <Package className="w-4 h-4 md:w-5 md:h-5" />,
       allowedRoles: ['owner'],
       requiresStore: true
     },
     { 
       name: "Customers", 
       href: "/customers", 
-      icon: <Users className="w-4 h-4" />,
+      icon: <Users className="w-4 h-4 md:w-5 md:h-5" />,
       allowedRoles: ['owner'],
       requiresStore: true
     },
     { 
       name: "Reports", 
       href: "/reports", 
-      icon: <BarChart3 className="w-4 h-4" />,
+      icon: <BarChart3 className="w-4 h-4 md:w-5 md:h-5" />,
       allowedRoles: ['owner'],
       requiresStore: true
     },
@@ -268,20 +296,20 @@ export default function Navbar() {
     { 
       name: "Shop", 
       href: "/shop", 
-      icon: <ShopIcon className="w-4 h-4" />,
+      icon: <ShopIcon className="w-4 h-4 md:w-5 md:h-5" />,
       allowedRoles: ['user']
     },
     { 
       name: "My Cart", 
       href: "/cart", 
-      icon: <ShoppingCart className="w-4 h-4" />,
+      icon: <ShoppingCart className="w-4 h-4 md:w-5 md:h-5" />,
       allowedRoles: ['user']
     },
     // Common menu items
     { 
       name: "My Profile", 
       href: "/profile", 
-      icon: <User className="w-4 h-4" />,
+      icon: <User className="w-4 h-4 md:w-5 md:h-5" />,
       allowedRoles: ['owner', 'user']
     },
   ], [notifications]);
@@ -295,6 +323,18 @@ export default function Navbar() {
       return hasRole && hasStore;
     });
   }, [navigationItems, user]);
+
+  // Separate items for different screen sizes
+  const desktopNavItems = useMemo(() => 
+    filteredNavItems.filter(item => !['My Cart', 'My Profile'].includes(item.name))
+  , [filteredNavItems]);
+
+  const tabletNavItems = useMemo(() => 
+    filteredNavItems.filter(item => 
+      ['Dashboard', 'Orders', 'Shop', 'Products'].includes(item.name) ||
+      (user?.role === 'owner' && ['Inventory', 'Customers'].includes(item.name))
+    )
+  , [filteredNavItems, user]);
 
   // Get user initials for avatar
   const getUserInitials = useCallback(() => {
@@ -320,10 +360,19 @@ export default function Navbar() {
           ? 'bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg shadow-sm' 
           : 'bg-white dark:bg-gray-900'
       } border-b border-gray-100 dark:border-gray-800`}>
-        <div className="px-4 md:px-6 py-3">
+        <div className="px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex items-center justify-between">
-            <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-8 w-48 rounded"></div>
-            <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-8 w-24 rounded"></div>
+            <div className="flex items-center gap-3">
+              <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-10 w-10 rounded-xl"></div>
+              <div className="hidden sm:block">
+                <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-6 w-32 rounded mb-1"></div>
+                <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-4 w-24 rounded"></div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-10 w-24 rounded-xl"></div>
+              <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-10 w-10 rounded-full"></div>
+            </div>
           </div>
         </div>
       </nav>
@@ -333,32 +382,32 @@ export default function Navbar() {
   return (
     <nav className={`sticky top-0 z-50 transition-all duration-300 ${
       isScrolled 
-        ? 'bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg shadow-sm' 
+        ? 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg shadow-sm' 
         : 'bg-white dark:bg-gray-900'
     } border-b border-gray-100 dark:border-gray-800`}>
-      <div className="px-4 md:px-6 py-3">
-        <div className="flex items-center justify-between">
+      <div className="px-4 sm:px-6 lg:px-8 py-3">
+        <div className="flex items-center justify-between gap-4">
           {/* Logo and Mobile Menu Button */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-4">
             <button 
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl md:hidden transition-colors"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl lg:hidden transition-colors"
               aria-label={isMenuOpen ? "Close menu" : "Open menu"}
               aria-expanded={isMenuOpen}
             >
               {isMenuOpen ? (
-                <X className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                <X className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700 dark:text-gray-300" />
               ) : (
-                <Menu className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                <Menu className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700 dark:text-gray-300" />
               )}
             </button>
             
-            <Link href="/dashboard" className="flex items-center gap-2">
+            <Link href="/dashboard" className="flex items-center gap-2 sm:gap-3">
               <div className="p-2 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl shadow-sm">
-                <Store className="w-6 h-6 text-white" />
+                <Store className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
-              <div>
-                <h1 className="font-bold text-gray-800 dark:text-white text-xl">
+              <div className="hidden xs:block">
+                <h1 className="font-bold text-gray-800 dark:text-white text-lg sm:text-xl">
                   Kirana<span className="text-emerald-600 dark:text-emerald-400">Pro</span>
                 </h1>
                 <p className="text-xs text-gray-500 dark:text-gray-400 -mt-1">
@@ -368,34 +417,80 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-1">
-            {filteredNavItems
-              .filter(item => !['My Profile', 'Settings', 'My Cart'].includes(item.name))
-              .map((item) => (
-                <Link 
-                  key={item.name}
-                  href={item.href} 
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${
-                    isActive(item.href) 
-                      ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 font-medium' 
-                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
-                  }`}
-                  aria-current={isActive(item.href) ? "page" : undefined}
-                >
-                  {item.icon}
-                  <span>{item.name}</span>
-                  {item.badge && item.badge > 0 && (
-                    <span className="ml-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                      {item.badge}
-                    </span>
-                  )}
-                </Link>
-              ))}
+          {/* Search Bar - Visible on Tablet and Desktop */}
+          {/* <div className="hidden md:flex flex-1 max-w-2xl mx-4 search-container">
+            <div className="relative w-full">
+              <input
+                type="text"
+                placeholder="Search products, orders, customers..."
+                className="w-full px-4 pl-12 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-400 focus:border-transparent"
+              />
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <button className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-emerald-600 dark:text-emerald-400 font-medium">
+                Search
+              </button>
+            </div>
+          </div> */}
+
+          {/* Desktop Navigation - Hidden on Mobile */}
+          <div className="hidden lg:flex items-center gap-1 xl:gap-2">
+            {desktopNavItems.slice(0, windowWidth >= 1280 ? 6 : 5).map((item) => (
+              <Link 
+                key={item.name}
+                href={item.href} 
+                className={`flex items-center gap-2 px-3 py-2 xl:px-4 xl:py-2 rounded-xl transition-all ${
+                  isActive(item.href) 
+                    ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 font-medium' 
+                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                }`}
+                aria-current={isActive(item.href) ? "page" : undefined}
+              >
+                {item.icon}
+                <span className="text-sm xl:text-base">{item.name}</span>
+                {item.badge && item.badge > 0 && (
+                  <span className="ml-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {item.badge}
+                  </span>
+                )}
+              </Link>
+            ))}
+          </div>
+
+          {/* Tablet Navigation - Compact */}
+          <div className="hidden md:flex lg:hidden items-center gap-1">
+            {tabletNavItems.slice(0, 4).map((item) => (
+              <Link 
+                key={item.name}
+                href={item.href} 
+                className={`p-2 rounded-xl transition-all ${
+                  isActive(item.href) 
+                    ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400' 
+                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                }`}
+                aria-label={item.name}
+                aria-current={isActive(item.href) ? "page" : undefined}
+              >
+                {item.icon}
+                {item.badge && item.badge > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                    {item.badge > 9 ? '9+' : item.badge}
+                  </span>
+                )}
+              </Link>
+            ))}
           </div>
 
           {/* Right Section */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
+            {/* Mobile Search Button */}
+            <button 
+              onClick={() => setIsSearchOpen(!isSearchOpen)}
+              className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
+              aria-label="Search"
+            >
+              <Search className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+            </button>
+
             {/* Cart Icon with Count - Only for users */}
             {user?.role === 'user' && (
               <Link 
@@ -411,6 +506,15 @@ export default function Navbar() {
                 )}
               </Link>
             )}
+
+            {/* Support Chat - Desktop only */}
+            <Link 
+              href="/support" 
+              className="hidden lg:flex items-center gap-1 p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
+              aria-label="Support chat"
+            >
+              <MessageSquare className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+            </Link>
 
             {/* Notifications Dropdown */}
             <div className="relative notifications-dropdown">
@@ -432,7 +536,7 @@ export default function Navbar() {
               </button>
 
               {isNotificationsOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-100 dark:border-gray-800 py-2 z-50 animate-in slide-in-from-top-2 duration-200">
+                <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-100 dark:border-gray-800 py-2 z-50 animate-in slide-in-from-top-2 duration-200">
                   <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
                     <h3 className="font-semibold text-gray-800 dark:text-white">Notifications</h3>
                     <div className="flex gap-2">
@@ -496,7 +600,7 @@ export default function Navbar() {
                         </button>
                       ))
                     ) : (
-                      <div className="px-4 py-8 text-center">
+                      <div className="px-4  py-8 text-center">
                         <Bell className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
                         <p className="text-gray-500 dark:text-gray-400 font-medium">No notifications</p>
                         <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
@@ -521,7 +625,7 @@ export default function Navbar() {
               )}
             </div>
 
-            {/* Theme Toggle */}
+            {/* Theme Toggle - Always visible */}
             <button 
               onClick={toggleDarkMode}
               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
@@ -534,10 +638,10 @@ export default function Navbar() {
               )}
             </button>
 
-            {/* Help */}
+            {/* Help - Desktop only */}
             <Link 
               href="/help" 
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
+              className="hidden lg:flex p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
               aria-label="Help center"
             >
               <HelpCircle className="w-5 h-5 text-gray-600 dark:text-gray-300" />
@@ -555,7 +659,7 @@ export default function Navbar() {
                   aria-label="User profile menu"
                   aria-expanded={isProfileOpen}
                 >
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-sm ${
+                  <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center shadow-sm ${
                     user.role === 'owner' 
                       ? 'bg-gradient-to-br from-emerald-400 to-green-500' 
                       : 'bg-gradient-to-br from-blue-400 to-indigo-500'
@@ -564,7 +668,7 @@ export default function Navbar() {
                       {getUserInitials()}
                     </span>
                   </div>
-                  <div className="hidden md:block text-left max-w-[150px]">
+                  <div className="hidden xl:block text-left max-w-[150px]">
                     <p className="text-sm font-medium text-gray-800 dark:text-white truncate">
                       {user.name || user.storeName || 'User'}
                     </p>
@@ -584,7 +688,7 @@ export default function Navbar() {
 
                 {/* Dropdown Menu */}
                 {isProfileOpen && (
-                  <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-100 dark:border-gray-800 py-2 z-50 animate-in slide-in-from-top-2 duration-200">
+                  <div className="absolute right-0 mt-2 w-64 sm:w-72 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-100 dark:border-gray-800 py-2 z-50 animate-in slide-in-from-top-2 duration-200">
                     <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
                       <p className="font-medium text-gray-800 dark:text-white truncate">
                         {user.name || user.storeName || 'User'}
@@ -648,19 +752,41 @@ export default function Navbar() {
               </div>
             ) : (
               <Link href="/login">
-                <button className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white font-medium px-4 py-2 rounded-xl transition-colors shadow-sm">
+                <button className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white font-medium px-3 sm:px-4 py-2 rounded-xl transition-colors shadow-sm">
                   <User className="w-4 h-4" />
-                  <span>Login</span>
+                  <span className="hidden sm:inline">Login</span>
                 </button>
               </Link>
             )}
           </div>
         </div>
 
+        {/* Mobile Search Bar */}
+        {isSearchOpen && (
+          <div className="mt-3 md:hidden search-container animate-in slide-in-from-top-4 duration-200">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search products, orders, customers..."
+                className="w-full px-4 pl-12 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-400 focus:border-transparent"
+                autoFocus
+              />
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <button className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-emerald-600 dark:text-emerald-400 font-medium">
+                Search
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="mt-4 md:hidden bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 shadow-lg animate-in slide-in-from-top-4 duration-200">
+          <div className="mt-4 lg:hidden bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 shadow-lg animate-in slide-in-from-top-4 duration-200">
             <div className="space-y-1">
+              <div className="px-2 pb-2 mb-2 border-b border-gray-100 dark:border-gray-800">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Navigation</p>
+              </div>
+              
               {filteredNavItems.map((item) => (
                 <Link 
                   key={item.name}
@@ -688,14 +814,46 @@ export default function Navbar() {
                 </Link>
               ))}
               
+              {/* Quick Actions */}
+              <div className="px-2 pt-4 pb-2 mt-4 border-t border-gray-100 dark:border-gray-800">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Quick Actions</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <Link 
+                    href="/help"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex flex-col items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <HelpCircle className="w-5 h-5 text-gray-600 dark:text-gray-300 mb-1" />
+                    <span className="text-xs font-medium text-gray-700 dark:text-gray-200">Help</span>
+                  </Link>
+                  <Link 
+                    href="/support"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex flex-col items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <MessageSquare className="w-5 h-5 text-gray-600 dark:text-gray-300 mb-1" />
+                    <span className="text-xs font-medium text-gray-700 dark:text-gray-200">Support</span>
+                  </Link>
+                </div>
+              </div>
+              
               {user ? (
                 <>
-                  <div className="border-t border-gray-100 dark:border-gray-800 my-2 pt-2">
+                  <div className="border-t border-gray-100 dark:border-gray-800 my-2 pt-4">
                     <div className="px-4 py-2">
                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Signed in as</p>
                       <p className="font-medium text-gray-800 dark:text-white truncate">
                         {user.name || user.email}
                       </p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          user.role === 'owner' 
+                            ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300' 
+                            : 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                        }`}>
+                          {user.role === 'owner' ? 'Store Owner' : 'Customer'}
+                        </span>
+                      </div>
                     </div>
                   </div>
                   <button
@@ -715,7 +873,7 @@ export default function Navbar() {
                 <Link 
                   href="/login"
                   onClick={() => setIsMenuOpen(false)}
-                  className="block py-3 px-4 bg-emerald-500 hover:bg-emerald-600 text-white text-center font-medium rounded-lg transition-colors shadow-sm"
+                  className="block py-3 px-4 bg-emerald-500 hover:bg-emerald-600 text-white text-center font-medium rounded-lg transition-colors shadow-sm mt-4"
                 >
                   Login to Account
                 </Link>

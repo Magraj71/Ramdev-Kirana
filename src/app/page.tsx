@@ -34,7 +34,6 @@ import {
   UserPlus,
   LogIn
 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 
 interface Feature {
@@ -62,6 +61,19 @@ export default function HomePage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
+  // Store Owner Information - Updated with Sukharam Jakhar's details
+  const storeOwner = {
+    name: "Sukharam Jakhar",
+    storeName: "Ramdev Enterprises",
+    location: "Cherai, Jodhpur",
+    address: "Bus Stand Main Market, Cherai",
+    phone: "+91 9602135397",
+    email: "ramdeventerprises@example.com",
+    yearsInBusiness: 12,
+    customersDaily: 150,
+    monthlyRevenue: "₹8.5 Lakhs+"
+  };
+
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
@@ -81,33 +93,33 @@ export default function HomePage() {
 
   const testimonials: Testimonial[] = [
     { 
-      name: "Rajesh Kumar", 
+      name: "Sukharam Jakhar", 
       role: "Store Owner", 
-      content: "KiranaPro increased my monthly revenue by 45% in just 3 months. The analytics helped me understand customer behavior better.", 
+      content: "This platform increased my monthly revenue by 45% in just 3 months. The analytics helped me understand customer behavior better.", 
       rating: 5, 
-      store: "Rajesh Kirana Store, Pune" 
+      store: "Ramdev Enterprises, Cherai, Jodhpur" 
     },
     { 
-      name: "Priya Patel", 
+      name: "Mohanlal Sharma", 
       role: "Supermarket Owner", 
-      content: "Managing inventory was always a challenge. Now with KiranaPro, I save 15+ hours every week on manual tasks.", 
+      content: "Managing inventory was always a challenge. Now with this system, I save 15+ hours every week on manual tasks.", 
       rating: 5, 
-      store: "Patel Supermarket, Mumbai" 
+      store: "Sharma Supermarket, Jodhpur" 
     },
     { 
-      name: "Amit Sharma", 
+      name: "Ramesh Kumar", 
       role: "Convenience Store", 
       content: "The digital billing and customer management features have transformed how I run my store. Highly recommended!", 
       rating: 5, 
-      store: "Sharma General Store, Delhi" 
+      store: "Kumar General Store, Jodhpur" 
     },
   ];
 
   const stats: Stat[] = [
-    { value: "500+", label: "Stores Registered", icon: StoreIcon },
-    { value: "50K+", label: "Happy Customers", icon: Users },
-    { value: "₹10M+", label: "Monthly Transactions", icon: DollarSign },
-    { value: "98%", label: "Satisfaction Rate", icon: Heart },
+    { value: "12 Years", label: "Store Experience", icon: StoreIcon },
+    { value: "150+", label: "Daily Customers", icon: Users },
+    { value: "₹8.5L+", label: "Monthly Revenue", icon: DollarSign },
+    { value: "24/7", label: "Digital Store", icon: Heart },
   ];
 
   const handleGetStarted = () => {
@@ -128,7 +140,7 @@ export default function HomePage() {
                 <ShoppingBag className="h-6 w-6 text-white" />
               </div>
               <div>
-                <span className="text-2xl font-bold text-gray-900">Kirana<span className="text-emerald-600">Pro</span></span>
+                <span className="text-2xl font-bold text-gray-900">Ramdev<span className="text-emerald-600">Pro</span></span>
                 <p className="text-xs text-gray-600 -mt-1">Smart Store Management</p>
               </div>
             </Link>
@@ -203,23 +215,48 @@ export default function HomePage() {
         
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="text-center max-w-4xl mx-auto">
-            {/* Badge */}
+            {/* Badge - Updated with store info */}
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-full mb-8">
               <Sparkles className="w-4 h-4" />
-              <span className="text-sm font-medium">Trusted by 500+ Local Stores</span>
+              <span className="text-sm font-medium">Since 2011 - {storeOwner.storeName}, {storeOwner.location}</span>
             </div>
 
-            {/* Main Heading */}
-            <h1 className="text-5xl lg:text-7xl font-bold text-gray-900 mb-6">
-              Transform Your <span className="text-emerald-600">Kirana Store</span><br />
-              Into A <span className="text-emerald-600">Digital Business</span>
+            {/* Main Heading - Updated */}
+            <h1 className="text-5xl sm:text-4xl lg:text-7xl font-bold text-gray-900 mb-6">
+              Welcome to <span className="text-emerald-600">{storeOwner.storeName}</span><br />
+              Your Trusted Store in <span className="text-emerald-600">{storeOwner.location}</span>
             </h1>
 
-            {/* Subheading */}
+            {/* Subheading - Updated */}
             <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
-              Everything you need to manage, grow, and modernize your local store. 
-              From inventory to analytics, all in one powerful platform.
+              Serving the community of Cherai for over <span className="font-bold text-emerald-600">12 years</span>. 
+              Now with digital store management to serve you better, faster, and smarter.
             </p>
+
+            {/* Store Owner Info Card */}
+            <div className="bg-gradient-to-br from-white to-emerald-50 rounded-2xl p-6 mb-10 max-w-md mx-auto border border-emerald-100 shadow-sm">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-green-600 rounded-full flex items-center justify-center">
+                  <span className="text-xl font-bold text-white">SJ</span>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">{storeOwner.name}</h3>
+                  <p className="text-gray-600">Proprietor - {storeOwner.storeName}</p>
+                </div>
+              </div>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-emerald-600" />
+                  <span className="text-gray-500">{storeOwner.address}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Phone className="w-4 h-4 text-emerald-600" />
+                  <a href={`tel:${storeOwner.phone}`}className="text-gray-500 hover:text-emerald-600">
+                    {storeOwner.phone}
+                  </a>
+                </div>
+              </div>
+            </div>
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
@@ -228,7 +265,7 @@ export default function HomePage() {
                 className="px-8 py-4 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-semibold rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center gap-3 text-lg group"
               >
                 <LogIn className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                Start Free Trial - No Credit Card
+                Start Digital Journey - Free Trial
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
               
@@ -241,12 +278,12 @@ export default function HomePage() {
               </Link>
             </div>
 
-            {/* Stats */}
+            {/* Stats - Updated */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto">
               {stats.map((stat, index) => {
                 const Icon = stat.icon;
                 return (
-                  <div key={index} className="text-center p-4">
+                  <div key={index} className="text-center p-4 bg-white rounded-xl border border-emerald-100 shadow-sm">
                     <div className="flex items-center justify-center gap-2 mb-2">
                       <Icon className="w-5 h-5 text-emerald-600" />
                       <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
@@ -266,7 +303,7 @@ export default function HomePage() {
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">Everything You Need to Succeed</h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Powerful tools designed specifically for Indian Kirana stores
+              Powered by RamdevPro - Digital tools for modern store management
             </p>
           </div>
 
@@ -294,40 +331,40 @@ export default function HomePage() {
       <section id="how-it-works" className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-white to-emerald-50/50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Get Started in 3 Simple Steps</h2>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">How Ramdev Enterprises Transformed</h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Join thousands of stores that have transformed their business
+              From traditional store to digital powerhouse in 3 simple steps
             </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="text-center p-8">
+            <div className="text-center p-8 bg-white rounded-2xl border border-emerald-100">
               <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <span className="text-3xl font-bold text-emerald-600">1</span>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Sign Up Free</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Digital Onboarding</h3>
               <p className="text-gray-600">
-                Create your store account in 2 minutes. No credit card required for the free trial.
+                Sukharam Jakhar signed up and set up his digital store in just 2 days.
               </p>
             </div>
 
-            <div className="text-center p-8">
+            <div className="text-center p-8 bg-white rounded-2xl border border-emerald-100">
               <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <span className="text-3xl font-bold text-emerald-600">2</span>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Set Up Your Store</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Smart Inventory Setup</h3>
               <p className="text-gray-600">
-                Add your products, set prices, and customize your digital storefront.
+                Automated stock tracking reduced waste by 30% and increased profits.
               </p>
             </div>
 
-            <div className="text-center p-8">
+            <div className="text-center p-8 bg-white rounded-2xl border border-emerald-100">
               <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <span className="text-3xl font-bold text-emerald-600">3</span>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Start Growing</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Revenue Growth</h3>
               <p className="text-gray-600">
-                Manage orders, track inventory, and watch your business grow with analytics.
+                Monthly revenue increased by 45% with digital customer management.
               </p>
             </div>
           </div>
@@ -337,7 +374,7 @@ export default function HomePage() {
               onClick={handleGetStarted}
               className="px-8 py-4 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-semibold rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 text-lg"
             >
-              Start Your Free Trial Now
+              Transform Your Store Like Ramdev Enterprises
             </button>
           </div>
         </div>
@@ -347,9 +384,9 @@ export default function HomePage() {
       <section id="testimonials" className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Trusted by Store Owners Across India</h2>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Success Stories from Jodhpur Store Owners</h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              See what local store owners are saying about KiranaPro
+              See what local store owners are saying about digital transformation
             </p>
           </div>
 
@@ -380,12 +417,123 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Store Information Section */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-emerald-50 to-green-50">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Visit Ramdev Enterprises</h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Your trusted neighborhood store in Cherai, Jodhpur
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            {/* Store Details */}
+            <div className="bg-white rounded-2xl p-8 shadow-lg border border-emerald-100">
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">Store Information</h3>
+              
+              <div className="space-y-6">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-emerald-50 rounded-lg">
+                    <Store className="w-6 h-6 text-emerald-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-gray-900 text-lg mb-1">Store Name</h4>
+                    <p className="text-gray-700">{storeOwner.storeName}</p>
+                    <p className="text-gray-600 text-sm">{storeOwner.address}</p>
+                    <p className="text-gray-600 text-sm">{storeOwner.location}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-emerald-50 rounded-lg">
+                    <Clock className="w-6 h-6 text-emerald-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-gray-900 text-lg mb-1">Opening Hours</h4>
+                    <p className="text-gray-700">Monday - Saturday: 7:00 AM - 10:00 PM</p>
+                    <p className="text-gray-700">Sunday: 8:00 AM - 9:00 PM</p>
+                    <p className="text-gray-600 text-sm">Festival Days: Open 24 Hours</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-emerald-50 rounded-lg">
+                    <Phone className="w-6 h-6 text-emerald-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-gray-900 text-lg mb-1">Contact Information</h4>
+                    <p className="text-gray-700">
+                      <a href={`tel:${storeOwner.phone}`} className="hover:text-emerald-600">
+                        {storeOwner.phone}
+                      </a>
+                    </p>
+                    <p className="text-gray-700">
+                      <a href={`mailto:${storeOwner.email}`} className="hover:text-emerald-600">
+                        {storeOwner.email}
+                      </a>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-emerald-50 rounded-lg">
+                    <Award className="w-6 h-6 text-emerald-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-gray-900 text-lg mb-1">Business Since</h4>
+                    <p className="text-gray-700">{storeOwner.yearsInBusiness} Years</p>
+                    <p className="text-gray-600 text-sm">Serving Cherai since 2011</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Services Offered */}
+            <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl p-8 text-white">
+              <h3 className="text-2xl font-bold mb-6">Our Services</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {[
+                  "Daily Grocery & Provisions",
+                  "Bulk Orders for Functions",
+                  "Home Delivery Service",
+                  "Credit Facility (Trusted Customers)",
+                  "Fresh Vegetables & Fruits",
+                  "Kitchen Essentials",
+                  "Beverages & Snacks",
+                  "Personal Care Products",
+                  "Cleaning Supplies",
+                  "Emergency Orders 24/7"
+                ].map((service, index) => (
+                  <div key={index} className="flex items-center gap-3 p-3 bg-white/10 rounded-lg backdrop-blur-sm">
+                    <CheckCircle className="w-5 h-5" />
+                    <span>{service}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-8 pt-8 border-t border-white/20">
+                <h4 className="font-bold text-lg mb-3">Why Choose {storeOwner.storeName}?</h4>
+                <div className="space-y-2">
+                  <p className="text-emerald-100">✓ 12+ Years of Trust</p>
+                  <p className="text-emerald-100">✓ Quality Guaranteed Products</p>
+                  <p className="text-emerald-100">✓ Competitive Prices</p>
+                  <p className="text-emerald-100">✓ Personalized Service</p>
+                  <p className="text-emerald-100">✓ Community-Focused</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-emerald-600 to-green-700">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl font-bold text-white mb-6">Ready to Transform Your Store?</h2>
           <p className="text-xl text-emerald-100 mb-10 max-w-2xl mx-auto">
-            Join 500+ stores that have already digitized their business with KiranaPro
+            Join {storeOwner.storeName} and 500+ stores that have already digitized their business
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
@@ -396,12 +544,12 @@ export default function HomePage() {
               Start Free 14-Day Trial
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
-            <Link 
-              href="/demo" 
+            <button 
               className="px-8 py-4 border-2 border-white text-white hover:bg-white/10 font-semibold rounded-2xl transition-all duration-300 text-lg"
+              onClick={() => window.location.href = `tel:${storeOwner.phone}`}
             >
-              Watch Demo Video
-            </Link>
+              Call {storeOwner.storeName}: {storeOwner.phone}
+            </button>
           </div>
           <p className="text-emerald-200 text-sm mt-8">No credit card required • Cancel anytime</p>
         </div>
@@ -411,19 +559,19 @@ export default function HomePage() {
       <footer className="bg-gray-900 text-gray-300 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            {/* Company Info */}
+            {/* Company Info - Updated */}
             <div>
               <div className="flex items-center gap-3 mb-6">
                 <div className="p-2 bg-emerald-600 rounded-xl">
-                  <ShoppingBag className="h-6 w-6 text-white" />
+                  <Store className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <span className="text-2xl font-bold text-white">Kirana<span className="text-emerald-400">Pro</span></span>
-                  <p className="text-xs text-gray-400">Smart Store Management</p>
+                  <span className="text-2xl font-bold text-white">{storeOwner.storeName}</span>
+                  <p className="text-xs text-gray-400">Since 2011 • Cherai, Jodhpur</p>
                 </div>
               </div>
               <p className="text-gray-400 mb-6">
-                Empowering local Kirana stores with digital tools to compete and grow in the modern economy.
+                Serving the Cherai community for over 12 years with quality products and exceptional service.
               </p>
               <div className="flex gap-4">
                 <a href="#" className="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors">
@@ -435,8 +583,8 @@ export default function HomePage() {
                 <a href="#" className="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors">
                   <Twitter className="w-5 h-5" />
                 </a>
-                <a href="#" className="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors">
-                  <Youtube className="w-5 h-5" />
+                <a href={`https://wa.me/919602135397`} className="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors">
+                  <Phone className="w-5 h-5" />
                 </a>
               </div>
             </div>
@@ -445,9 +593,9 @@ export default function HomePage() {
             <div>
               <h3 className="text-white font-semibold mb-6">Quick Links</h3>
               <ul className="space-y-3">
-                <li><Link href="/features" className="hover:text-white transition-colors">Features</Link></li>
-                <li><Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link></li>
-                <li><Link href="/about" className="hover:text-white transition-colors">About Us</Link></li>
+                <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
+                <li><a href="#testimonials" className="hover:text-white transition-colors">Success Stories</a></li>
+                <li><a href="#pricing" className="hover:text-white transition-colors">Pricing</a></li>
                 <li><Link href="/contact" className="hover:text-white transition-colors">Contact</Link></li>
               </ul>
             </div>
@@ -463,28 +611,37 @@ export default function HomePage() {
               </ul>
             </div>
 
-            {/* Contact */}
+            {/* Contact - Updated */}
             <div>
-              <h3 className="text-white font-semibold mb-6">Contact Us</h3>
+              <h3 className="text-white font-semibold mb-6">Contact {storeOwner.storeName}</h3>
               <ul className="space-y-3">
                 <li className="flex items-center gap-2">
                   <Phone className="w-4 h-4" />
-                  <span>+91 98765 43210</span>
+                  <a href={`tel:${storeOwner.phone}`} className="hover:text-white">
+                    {storeOwner.phone}
+                  </a>
                 </li>
                 <li className="flex items-center gap-2">
                   <Mail className="w-4 h-4" />
-                  <span>support@kiranapro.com</span>
+                  <a href={`mailto:${storeOwner.email}`} className="hover:text-white">
+                    {storeOwner.email}
+                  </a>
                 </li>
                 <li className="flex items-center gap-2">
                   <MapPin className="w-4 h-4" />
-                  <span>Pune, Maharashtra</span>
+                  <span>{storeOwner.address}, {storeOwner.location}</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  <span>7AM-10PM, Daily</span>
                 </li>
               </ul>
             </div>
           </div>
 
           <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-500 text-sm">
-            <p>&copy; {new Date().getFullYear()} KiranaPro. All rights reserved. Made with ❤️ for Indian Kirana Stores.</p>
+            <p>&copy; {new Date().getFullYear()} {storeOwner.storeName}. All rights reserved. Made with ❤️ for the people of Cherai, Jodhpur.</p>
+            <p className="mt-2">GSTIN: 08AAAAA0000A1Z5 | FSSAI License: 12345678901234</p>
           </div>
         </div>
       </footer>

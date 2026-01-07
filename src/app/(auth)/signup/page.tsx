@@ -30,7 +30,7 @@ import {
 export default function SignupPage() {
   const router = useRouter();
 
-  const [role, setRole] = useState<"owner" | "user">("owner");
+  const [role, setRole] = useState<"owner" | "user">("user");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
