@@ -272,23 +272,9 @@ export default function Navbar() {
       requiresStore: true
     },
     { 
-      name: "Inventory", 
-      href: "/inventory", 
-      icon: <Package className="w-4 h-4 md:w-5 md:h-5" />,
-      allowedRoles: ['owner'],
-      requiresStore: true
-    },
-    { 
       name: "Customers", 
       href: "/customers", 
       icon: <Users className="w-4 h-4 md:w-5 md:h-5" />,
-      allowedRoles: ['owner'],
-      requiresStore: true
-    },
-    { 
-      name: "Reports", 
-      href: "/reports", 
-      icon: <BarChart3 className="w-4 h-4 md:w-5 md:h-5" />,
       allowedRoles: ['owner'],
       requiresStore: true
     },
@@ -332,7 +318,7 @@ export default function Navbar() {
   const tabletNavItems = useMemo(() => 
     filteredNavItems.filter(item => 
       ['Dashboard', 'Orders', 'Shop', 'Products'].includes(item.name) ||
-      (user?.role === 'owner' && ['Inventory', 'Customers'].includes(item.name))
+      (user?.role === 'owner' && ['Customers'].includes(item.name))
     )
   , [filteredNavItems, user]);
 
@@ -506,15 +492,7 @@ export default function Navbar() {
                 )}
               </Link>
             )}
-
-            {/* Support Chat - Desktop only */}
-            <Link 
-              href="/support" 
-              className="hidden lg:flex items-center gap-1 p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
-              aria-label="Support chat"
-            >
-              <MessageSquare className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-            </Link>
+           
 
             {/* Notifications Dropdown */}
             <div className="relative notifications-dropdown">
@@ -639,13 +617,7 @@ export default function Navbar() {
             </button>
 
             {/* Help - Desktop only */}
-            <Link 
-              href="/help" 
-              className="hidden lg:flex p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
-              aria-label="Help center"
-            >
-              <HelpCircle className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-            </Link>
+           
 
             {/* Profile Dropdown */}
             {user ? (
@@ -813,29 +785,7 @@ export default function Navbar() {
                   </div>
                 </Link>
               ))}
-              
-              {/* Quick Actions */}
-              <div className="px-2 pt-4 pb-2 mt-4 border-t border-gray-100 dark:border-gray-800">
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Quick Actions</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <Link 
-                    href="/help"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex flex-col items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <HelpCircle className="w-5 h-5 text-gray-600 dark:text-gray-300 mb-1" />
-                    <span className="text-xs font-medium text-gray-700 dark:text-gray-200">Help</span>
-                  </Link>
-                  <Link 
-                    href="/support"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex flex-col items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <MessageSquare className="w-5 h-5 text-gray-600 dark:text-gray-300 mb-1" />
-                    <span className="text-xs font-medium text-gray-700 dark:text-gray-200">Support</span>
-                  </Link>
-                </div>
-              </div>
+          
               
               {user ? (
                 <>
